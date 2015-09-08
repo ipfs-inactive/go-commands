@@ -49,7 +49,7 @@ func NewClient(address string) Client {
 func (c *client) Send(req cmds.Request) (cmds.Response, error) {
 
 	if req.Context() == nil {
-		log.Warningf("no context set in request")
+		// log.Warningf("no context set in request")
 		if err := req.SetRootContext(context.TODO()); err != nil {
 			return nil, err
 		}
@@ -124,7 +124,7 @@ func (c *client) Send(req cmds.Request) (cmds.Response, error) {
 	for {
 		select {
 		case <-dc:
-			log.Debug("Context cancelled, cancelling HTTP request...")
+			// log.Debug("Context cancelled, cancelling HTTP request...")
 			tr := http.DefaultTransport.(*http.Transport)
 			tr.CancelRequest(httpReq)
 			dc = nil // Wait for ec or rc
@@ -265,7 +265,7 @@ func readStreamedJson(req cmds.Request, rr io.Reader, out chan<- interface{}) {
 		v, err := decodeTypedVal(outputType, dec)
 		if err != nil {
 			if err != io.EOF {
-				log.Error(err)
+				// log.Error(err)
 			}
 			return
 		}

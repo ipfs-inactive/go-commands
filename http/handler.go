@@ -16,14 +16,14 @@ import (
 	context "golang.org/x/net/context"
 
 	cmds "github.com/ipfs/go-commands"
-	util "github.com/ipfs/go-commands/util"
 )
 
-var log = util.Logger("commands/http")
+// commenting out log until figure out a good way to do it.
+// var log = util.Logger("commands/http")
 
 // the internal handler for the API
 type internalHandler struct {
-	ctx  cmds.Context
+	ctx  context.Context
 	root *cmds.Command
 	cfg  *ServerConfig
 }
@@ -85,7 +85,7 @@ func skipAPIHeader(h string) bool {
 	}
 }
 
-func NewHandler(ctx cmds.Context, root *cmds.Command, cfg *ServerConfig) *Handler {
+func NewHandler(ctx context.Context, root *cmds.Command, cfg *ServerConfig) *Handler {
 	if cfg == nil {
 		panic("must provide a valid ServerConfig")
 	}
@@ -103,11 +103,12 @@ func (i Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i internalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Debug("Incoming API request: ", r.URL)
+	// log.Debug("Incoming API request: ", r.URL)
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error(r)
+			// log.Error(r)
+			fmt.Fprintln(os.Stderr, r)
 
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
@@ -118,7 +119,7 @@ func (i internalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !allowOrigin(r, i.cfg) || !allowReferer(r, i.cfg) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 - Forbidden"))
-		log.Warningf("API blocked request to %s. (possible CSRF)", r.URL)
+		// log.Warningf("API blocked request to %s. (possible CSRF)", r.URL)
 		return
 	}
 
@@ -133,20 +134,10 @@ func (i internalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the node's context to pass into the commands.
-	node, err := i.ctx.GetNode()
-	if err != nil {
-		s := fmt.Sprintf("cmds/http: couldn't GetNode(): %s", err)
-		http.Error(w, s, http.StatusInternalServerError)
-		return
-	}
-
-	//ps: take note of the name clash - commands.Context != context.Context
-	req.SetInvocContext(i.ctx)
-
-	ctx, cancel := context.WithCancel(node.Context())
+	ctx, cancel := context.WithCancel(i.ctx)
 	defer cancel()
 
+	req.SetRootContext(ctx)
 	err = req.SetRootContext(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -244,11 +235,11 @@ func sendResponse(w http.ResponseWriter, r *http.Request, res cmds.Response, req
 
 	if err := writeResponse(status, w, out); err != nil {
 		if strings.Contains(err.Error(), "broken pipe") {
-			log.Info("client disconnect while writing stream ", err)
+			// log.Info("client disconnect while writing stream ", err)
 			return
 		}
 
-		log.Error("error while writing stream ", err)
+		// log.Error("error while writing stream ", err)
 	}
 }
 
@@ -258,7 +249,7 @@ func writeResponse(status int, w http.ResponseWriter, out io.Reader) error {
 	// hijack the connection so we can write our own chunked output and trailers
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
-		log.Error("Failed to create hijacker! cannot continue!")
+		// log.Error("Failed to create hijacker! cannot continue!")
 		return errors.New("Could not create hijacker")
 	}
 	conn, writer, err := hijacker.Hijack()
@@ -370,7 +361,8 @@ func allowReferer(r *http.Request, cfg *ServerConfig) bool {
 	u, err := url.Parse(referer)
 	if err != nil {
 		// bad referer. but there _is_ something, so bail.
-		log.Debug("failed to parse referer: ", referer)
+
+		// log.Debug("failed to parse referer: ", referer)
 		// debug because referer comes straight from the client. dont want to
 		// let people DOS by putting a huge referer that gets stored in log files.
 		return false

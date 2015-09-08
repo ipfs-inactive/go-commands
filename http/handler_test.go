@@ -8,7 +8,7 @@ import (
 
 	cors "github.com/rs/cors"
 
-	cmds "github.com/ipfs/go-commands"
+	// cmds "github.com/ipfs/go-commands"
 )
 
 func assertHeaders(t *testing.T, resHeaders http.Header, reqHeaders map[string]string) {
