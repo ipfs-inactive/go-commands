@@ -5,7 +5,9 @@
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-> WIP
+> (Deprecated) Commands library for go-ipfs
+
+This repository is dead and has long been continued within [go-ipfs](https://github.com/ipfs/go-ipfs).
 
 ## Table of Contents
 
